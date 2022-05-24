@@ -1,7 +1,13 @@
 package com.example.springbasic
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan
+import org.springframework.boot.context.properties.ConstructorBinding
 import org.springframework.boot.runApplication
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import org.springframework.data.repository.CrudRepository
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -10,11 +16,20 @@ import org.springframework.web.bind.annotation.*
 import javax.annotation.PostConstruct
 
 @SpringBootApplication
-class SpringBasicApplication
+@ConfigurationPropertiesScan
+class SpringBasicApplication {
+
+    @Bean
+    @ConfigurationProperties(prefix = "droid")
+    fun createDroid() = Droid()
+}
 
 fun main(args: Array<String>) {
     runApplication<SpringBasicApplication>(*args)
+
 }
+
+
 
 
 @Component
@@ -54,10 +69,13 @@ class RestApiDemoController(
     @PutMapping("/{id}")
     fun putCoffee(@PathVariable id: String, @RequestBody coffee: Coffee): ResponseEntity<Coffee> {
 
-        return if (!coffeeRepository.existsById(id)) ResponseEntity(coffeeRepository.save(coffee), HttpStatus.CREATED) else ResponseEntity(
-            coffeeRepository.save(coffee),
-            HttpStatus.OK
-        )
+        return if (coffeeRepository.existsById(id))
+            ResponseEntity(
+                coffeeRepository.save(coffee),
+                HttpStatus.OK
+            )
+        else
+            ResponseEntity(coffeeRepository.save(coffee), HttpStatus.CREATED)
     }
 
     @DeleteMapping("/{id}")
@@ -70,3 +88,32 @@ class RestApiDemoController(
 interface CoffeeRepository : CrudRepository<Coffee, String> {
 
 }
+
+
+@RestController
+@RequestMapping("/greeting")
+class GreetingController(
+    val greeting: Greeting
+) {
+    @GetMapping
+    fun getGreeting() = greeting.name
+
+    @GetMapping("/coffee")
+    fun getNameAndCoffee() = greeting.coffee
+}
+
+
+data class Droid(
+    val id: String? = null,
+    val description: String? = null
+)
+
+@RestController
+@RequestMapping("/droid")
+class DroidController(
+    @get:GetMapping val droid: Droid
+    ) {
+}
+
+
+
